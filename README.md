@@ -10,6 +10,7 @@ Tkinter module and other binary programs:
 2. mview
 3. muscle
 
+Important Note: Orthoprok.gif file has to be at the same path that Blaster.py.
 
 ## Usage
 
