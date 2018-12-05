@@ -4,8 +4,10 @@ Blaster uses Blast(tblastn) to perform homologus proteins search in a set of tar
 
 ## Require
 
-Tkinter module and other binary programs:
+python modules:
+Tkinter, biopython, pillow 
 
+other binary programs:
 1. ncbi blast
 2. mview
 3. muscle
