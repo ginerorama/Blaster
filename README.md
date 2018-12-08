@@ -7,7 +7,7 @@
 
 
 
-Blaster uses Blast(tblastn) to perform homologus proteins search in a set of target genomes. 
+Blaster uses Blast(tblastn) to perform homologous proteins search in a set of target genomes. 
 
 ## Require
 
