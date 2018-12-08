@@ -1,7 +1,7 @@
 # Blaster
 
 
-![alt text](https://github.com/ginerorama/PrimerGenerator/blob/master/Primer.gif)
+![alt text](https://github.com/ginerorama/Blaster/blob/master/orthoprok.gif) 
 
 
 
