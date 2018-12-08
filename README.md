@@ -26,6 +26,17 @@ Important Note: Orthoprok.gif file has to be at the same path that Blaster.py.
 
 Proteins and genomes sequences have to be in separated fasta (.fa, .fna, .fasta) files (multifasta is not supported).
 
+load genome files selecting the folder containning the target genome in /genome folder label
+load query proteins selecting the folder containning your proteins sequences in fasta format in /Queries folder
+Indicate the path in which your project is going to be save at /Save folder.
+
+## Analysis
+
+Firs yoou need to generate a log files picking up log buttom. Next perform a blast a analysis picking up at Blast buttom. Finally you can perform as many analysis you want changing the coverage and identity patterns (Note: the results are going to rewrite your old results unless you change your /Save folder.
+
+Use collapse to collapse all the genomes that belog to the same species.
+Use absence analysis to obtain those genomes that not contains you query proteins (default: presence analysis)
+
 
 ## Output
 
