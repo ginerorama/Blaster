@@ -1,5 +1,11 @@
 # Blaster
 
+
+![alt text](https://github.com/ginerorama/PrimerGenerator/blob/master/Primer.gif)
+
+
+
+
 Blaster uses Blast(tblastn) to perform homologus proteins search in a set of target genomes. 
 
 ## Require
