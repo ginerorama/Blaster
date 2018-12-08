@@ -1,7 +1,7 @@
 
 
 #!/usr/bin/python
-# primergenerator v0.2 
+#Blaster v0.1 
 #MIT License
 #
 #Copyright (c) 2018 Joaquin Giner Lamia
