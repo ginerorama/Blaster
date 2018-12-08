@@ -873,9 +873,7 @@ def Blast (openpath,savepath,querypath, redo):
 							f = open(outFileName,'w')
 							f.write("qseqid	sseqid	pident	length	mismatch	gapopen	qstart	qend	sstart	send	evalue	bitscore	qcovs	qcovhsp	qseq	sseq\n"+stdout)
 							f.close()
-			except:
-				count = count-1
-				continue
+			
 
 	for seq in os.listdir(queryDir):
 		if i != ".DS_Store":
