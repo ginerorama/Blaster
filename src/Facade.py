@@ -27,15 +27,14 @@ import sys
 
 import GenomeParser as genomeParser
 import Blaster as blaster
+import Analyzer as analyzer
 
 ########## GENOMES LOG
 
 # TODO Rename "parse_genomes"
 def updatelog(outputDir, subjectDir, UPDATE, err = sys.stderr):
-	
-	dict_file = genomeParser.updatelog(outputDir, subjectDir, UPDATE, err)
-	
-	return dict_file
+	# returns dict_file
+	return genomeParser.updatelog(outputDir, subjectDir, UPDATE, err)
 
 ######## BLAST
 
@@ -43,10 +42,14 @@ def Blast(queryDir, subjectDir, outputDir,
 		  known_query_list, known_target_list,
 		  redo, displayf, err = sys.stderr):
 	
-	blaster.Blast(queryDir, subjectDir, outputDir, 
+	return blaster.Blast(queryDir, subjectDir, outputDir, 
 		  known_query_list, known_target_list,
 		  redo, displayf, err)
+
+####### Analysis
+
+def analysis(savepath, cov, ident, collapsed, absence, err = sys.stderr):
 	
-	return
+	return analyzer.analysis(savepath, cov, ident, collapsed, absence, err)
 
 ## END
