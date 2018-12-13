@@ -1,7 +1,9 @@
-
-
-#!/usr/bin/python
-#Blaster v0.1 
+#!/home/gargamelle/anaconda2/bin/python
+#/usr/bin/python
+#Blaster v0.1
+#
+# Blaster.py
+# is part of Orthoprok
 #MIT License
 #
 #Copyright (c) 2018 Joaquin Giner Lamia
@@ -24,9 +26,6 @@
 #OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #SOFTWARE.
 
-
-
-
 ##########################################################################
 #
 #                   Import  Modules
@@ -46,7 +45,10 @@ import re
 from Bio import SeqIO
 from PIL import Image, ImageTk
 
+# CPC2018
+import gzip
 
+import subprocess
 
 ##########################################################################
 #
@@ -64,8 +66,6 @@ label1 = Label(window, image=imagen1).pack()
 #s = Style()
 #s.theme_names()
 #s.theme_use('aqua')
-
-
 
 ##########################################################################
 #
@@ -91,127 +91,128 @@ function = StringVar()
 redo = IntVar()
 collapsed =IntVar()
 absence = IntVar()
-query_list = []
-target_list = []
-
-
 
 ##########################################################################
 #
-#                   Utility functions
+#                   Commands
 #
 ##########################################################################
 
+import src.Facade as facade
+import src.GenomeParser as genomeParser
 
+#import Orthoprok_Facade as facade
+
+paths_dict = {}
+known_query_list = []
+known_target_list = []
+
+OPENPATH = "openpath"
+SAVEPATH = "savepath"
+QUERYPATH = "querypath"
+
+def _ask_directory(FieldPath, paths_dict, FIELDPATH):
+	dirpath = askdirectory()
+	#dirpath = "/".join(dirpath.split("/")[2::])
+	FieldPath.set(dirpath)
+	paths_dict[FIELDPATH] = dirpath
+	return dirpath
+
+def _display(text):
+	displayedText.set(text)
+	output_text.update_idletasks()
+	window.update()
+	return
 
 def Openfunc(): 
 	# Open directory where target sequence for blast are stored.
-	global openpath
-	openpath = askdirectory() # variable that stores target sequences path
-	fileopen = "/".join(openpath.split("/")[2::])
-	OpenName.set(fileopen)
+	#global openpath
+	#openpath = askdirectory() # variable that stores target sequences path
+	#fileopen = "/".join(openpath.split("/")[2::])
+	dirpath = _ask_directory(OpenName, paths_dict, OPENPATH)
+	#OpenName.set(dirpath)
+	#paths_dict[OPENPATH] = dirpath
+	return
 
 def Savefunc():
 	# Directory in which the project will be stored.
-	global savepath
-	savepath = askdirectory() # variable that stores project directory
-	filesave = "/".join(savepath.split("/")[2::])
-	SaveName.set(filesave)
+	#global savepath
+	#savepath = askdirectory() # variable that stores project directory
+	#filesave = "/".join(savepath.split("/")[2::])
+	dirpath = _ask_directory(SaveName, paths_dict, SAVEPATH)
+	#SaveName.set(dirpath)
+	#paths_dict[SAVEPATH] = dirpath
+	return
 
 def Queryfunc():
 	# Directory in which the query sequences are stored.
-	global querypath
-	querypath = askdirectory() # variable that stores query sequences
-	Querysave = "/".join(querypath.split("/")[2::])
-	QueryName.set(Querysave)
+	#global querypath
+	#querypath = askdirectory() # variable that stores query sequences
+	#Querysave = "/".join(querypath.split("/")[2::])
+	dirpath = _ask_directory(QueryName, paths_dict, QUERYPATH)
+	#QueryName.set(dirpath)
+	#paths_dict[QUERYPATH] = dirpath
+	return
 
+def iterateDirNs(paths_dict, UPDATE):
+	"""
+	Generate the log file input for blaster v2.0
+	automatic detection of .gz compressed genomes from genbank an uncompress
+	log file also contain in the 3th column from fasta header file
+	Arguments: /fasta_files_folder log_basename_file
 
-def change_extension_fasta(path):
-
-	for file in os.listdir(path):
-		if file.endswith(".fa") or file.endswith(".fna") :
-			file_base = os.path.splitext(file)[0]
-			os.rename(path_file+"/"+file, str(path_file+"/"+file_base) + ".fasta")
-
-
-
-
-
-def atoi(text):
-	return int(text) if text.isdigit() else text
-
-def natural_keys(text):
-	'''
-	alist.sort(key=natural_keys) sorts in human order
-	http://nedbatchelder.com/blog/200712/human_sorting.html
-	(See Toothy's implementation in the comments)
-	'''
-	return [ atoi(c) for c in re.split('(\d+)', text) ]
-
-
-
-def parseResults(file,cov,ident,function): #statsA
-	function = function
-	cov = int(cov)
-	ident = int(ident)
-	numPass = 0
-	line_number=0
-	nCount=0
-	protein_size = 0
-	iden = 0
-	if function == "retrieve_sequences":  	
-		seq = []
-		for line in file:
-			if line_number >= 1:  
-				fields = line.split("\t")
-				qcovhsp = int(fields[13])
-				pident = int(round(float(fields[2])))
-				sequence = fields[15]
-				if int(qcovhsp) > cov and int(pident) > ident: # ajustar los stats al menos 85% #
-					numPass += 1			
-					if "*" in sequence: #take only the sequence before codon stop	
-						sequence = sequence.split("*")[0]
-						seq.append(sequence)
-					else:
-						seq.append(sequence)
-			line_number = line_number +1		
-		if numPass == 0:
-			numPass =1
-			seq.append("NN")	
-		return [numPass,seq] 
-
-
-	if function == "Analysis":  	
-		seq = []
-		coverage = []
-		identity= []			
-		for line in file:
-			if line_number >= 1:        #this is to remove columns legends
-				fields = line.split("\t")
-				qcovhsp = int(fields[13])
-				pident = int(round(float(fields[2])))
-				sequence = fields[15]
-				if int(qcovhsp) > cov and int(pident) > ident: 
-					
-					if	'*' in sequence:     # si el stop codon no se encuentra en el 20% final de la proteina es un pseudogen
-						position = int(sequence.find('*'))
-						
-						if int(round(position/len(sequence)))*100 < 90: 
-							nCount = sequence.count("*") 
-
-						protein_size = int(round(position/len(sequence)))*100 
-					
-					else:				
-						protein_size = qcovhsp	
-					
-					iden = pident
-					numPass += 1			
-					seq.append(sequence)
-					coverage.append(qcovhsp)
-					identity.append(pident)
-			line_number = line_number +1		
+	"""
+	sys.stderr.write("Log function\n")
+	
+	subjectDir = paths_dict[OPENPATH]+"/"
+	outputDir = paths_dict[SAVEPATH]+"/"
+	
+	try:
+		sys.stderr.write("Before updatelog\n")
+		dict_file = facade.updatelog(outputDir, subjectDir, UPDATE, sys.stderr)
+		sys.stderr.write("After updatelog\n")
 		
-		return [numPass,coverage,identity,seq,nCount,protein_size,iden]	
+		if os.path.exists(dict_file):
+			_display("target sequences database done!!")
+		else:
+			raise Exception("Error in target sequences database!!")
+		
+	except Exception as e:
+		sys.stderr.write(str(e)+"\n")
+		_display(str(e))
+	
+	return # CPC2018
+
+def Blast (paths_dict, REDO):
+	
+	sys.stderr.write("Blast command\n")
+	
+	querypath = paths_dict[QUERYPATH]
+	savepath = paths_dict[SAVEPATH]
+	openpath = paths_dict[OPENPATH]
+	
+	change_extension_fasta(openpath)
+	change_extension_fasta(querypath)
+
+	queryDir = querypath+"/"
+	subjectDir = openpath+"/"
+	outputDir = savepath+"/output/"
+	
+	#creates output directory in project directory
+	newpath = savepath+"/output"
+	if not os.path.exists(newpath):
+		os.makedirs(newpath)
+	
+	facade.Blast(queryDir, subjectDir, outputDir, 
+						   known_query_list, known_target_list,
+						   REDO ,_display, sys.stderr)
+	
+	tkMessageBox.showinfo("ORTHOPROK","Blast is finished!!")				
+	displayedText.set('Blast is done!!')
+	
+	sys.stderr.write("Finished Blast command\n")
+	
+	return
 
 
 
@@ -320,12 +321,6 @@ def protein_length_graphic(savepath,height,width,font_scale):
 
 	displayedText.set('Protein plot done!!')
 
-
-
-
-
-
-
 def stripplot (savepath,height,width):
 
 	import matplotlib.pyplot as plt
@@ -400,10 +395,6 @@ def stripplot (savepath,height,width):
 	canvas.config(xscrollcommand=hbar.set, yscrollcommand=vbar.set)
 	canvas.pack(side=LEFT,expand=True,fill=BOTH)
 	canvas.pack(expand = YES, fill = BOTH)
-
-
-
-
 
 def analysis(savepath,openpath, cov, ident, collapsed, absence,height,width): #statsA + statisticsA
 	cov = int(cov.get())
@@ -810,174 +801,6 @@ def analysis(savepath,openpath, cov, ident, collapsed, absence,height,width): #s
 	canvas.pack(side=LEFT,expand=True,fill=BOTH)
 	canvas.pack(expand = YES, fill = BOTH)
 
-
-
-
-
-
-def Blast (openpath,savepath,querypath, redo):
-	from Bio.Blast.Applications import NcbiblastnCommandline
-	import subprocess
-	global query_list
-	global target_list
-	redo = int(redo.get())
-
-
-	change_extension_fasta(openpath)
-	change_extension_fasta(querypath)
-
-	queryDir = querypath+"/"
-	subjectDir = openpath+"/"
-	outputDir = savepath+"/output/"
-
-
-
-
-	#creates output directory in project directory
-	newpath = savepath+"/output"
-	if not os.path.exists(newpath):
-		os.makedirs(newpath)
-	
-	count =0
-	totalfiles = (len([name for name in os.listdir(queryDir) if os.path.isfile(os.path.join(queryDir, name))]))-1
-	
-	for i in  os.listdir(queryDir):
-		if i != ".DS_Store":
-			count += 1	
-			displayedText.set("Running blast: "+str(count)+" of "+str(totalfiles)+" sequences")
-			output_text.update_idletasks()
-			window.update()
-			queryFile = queryDir+i
-			try: 		
-				handle = open(queryFile,"rU")
-				record_dict = SeqIO.to_dict(SeqIO.parse(handle, "fasta"))
-				handle.close()
-				queryFile = '"'+queryDir+i+'"'
-				queryName = os.path.splitext(i)[0]# cuidado si interaccionas con los ficheros en finder y aparece DS_store aqui fallara hayq eliminar los DS_store files antes
-				for j in os.listdir(subjectDir):
-					if j.endswith(".fna") or j.endswith(".fasta") or j.endswith(".fa"):	
-						if redo == 1:
-							if i not in query_list and j not in target_list:
-								subjectFile = '"'+subjectDir+j+'"'
-								blastn_cline = NcbiblastnCommandline(cmd='tblastn',query=queryFile,subject=subjectFile,outfmt='"6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qcovs qcovhsp qseq sseq"',evalue='0.00001',num_threads='4')
-								stdout, stderr = blastn_cline()
-								outFileName = outputDir+queryName+"##"+os.path.splitext(j)[0]+".txt"
-								f = open(outFileName,'w')
-								f.write("qseqid	sseqid	pident	length	mismatch	gapopen	qstart	qend	sstart	send	evalue	bitscore	qcovs	qcovhsp	qseq	sseq\n"+stdout)
-								f.close()
-						if redo == 0:
-							subjectFile = '"'+subjectDir+j+'"'
-							blastn_cline = NcbiblastnCommandline(cmd='tblastn',query=queryFile,subject=subjectFile,outfmt='"6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qcovs qcovhsp qseq sseq"',evalue='0.00001',num_threads='4')
-							stdout, stderr = blastn_cline()
-							outFileName = outputDir+queryName+"##"+os.path.splitext(j)[0]+".txt"
-							f = open(outFileName,'w')
-							f.write("qseqid	sseqid	pident	length	mismatch	gapopen	qstart	qend	sstart	send	evalue	bitscore	qcovs	qcovhsp	qseq	sseq\n"+stdout)
-							f.close()
-			
-
-	for seq in os.listdir(queryDir):
-		if i != ".DS_Store":
-			queryName = os.path.splitext(i)[0]
-			query_list.append(queryName)
-	for target in os.listdir(subjectDir):
-		if i != ".DS_Store":
-			targetName = os.path.splitext(i)[0]
-			target_list.append(targetName)
-
-
-	tkMessageBox.showinfo("ORTHOPROK","Blast is finished!!")				
-	displayedText.set('Blast is done!!')
-	return query_list,target_list
-
-
-
-
-def iterateDirNs(openpath,savepath,update):
-	"""
-	Generate the log file input for blaster v2.0
-	automatic detection of .gz compressed genomes from genbank an uncompress
-	log file also contain in the 3th column from fasta header file
-	Arguments: /fasta_files_folder log_basename_file
-
-	"""
-	outputDir = savepath+"/"
-	subjectDir = openpath+"/"
-	
-	
-
-	if update =="No":
-
-		output = open(outputDir+"target_sequences.log","wr")
-		for i in os.listdir(subjectDir):
-			if i !=".DS_Store":
-				path = os.path.abspath(subjectDir+i)
-				name = os.path.splitext(i)[0]
-				extension = os.path.splitext(i)[1]
-		
-				#check for gz files from ncbi
-				if extension == ".gz":
-					import gzip
-					print "comprised gz file found\nuncompressing...(This could take some time!!"
-					file = gzip.open(path,"rb")
-					file = file.read()
-					uncompressed_file = open(subjectDir+name,"w")
-					uncompressed_file.write(str(file))
-				else:	
-					file = (open(path,"r")).readline()
-
-				#read the files and check for fasta files
-				if ">" not in file[0]:
-					displayedText.set("ERROR: " + name+ " is not a fasta file")
-					output_text.update_idletasks()
-					window.update()
-
-
-
-				else:
-					fasta_header = file.split("\n")[0][1::]
-					name_fasta= (" ".join(fasta_header.split(" ")[1::]).split(",")[0].split(".")[0].split("_")[0])
-					name_fasta= name_fasta.replace("circular","").replace("chromosome","").replace("complete","").replace("genome","").replace("sequence","").replace("assembly","")
-				#	output.write(str(name)+"\t"+str(path)+"\t"+str(fasta_header)+"\n")		
-					output.write(str(name_fasta)+"\t"+str(path)+"\t"+str(name)+"\n")		
-			
-
-		output.close()
-
-	
-
-	"""
-		Code to create target sequences dictionary
-	"""	
-
-
-	selected_genomes_dir = outputDir+"target_sequences.log" 
-	selected_genomes= open(selected_genomes_dir, 'r')
-
-	BD_dict= {}
-	for genome in selected_genomes:
-		ID = genome.split("\t")[2].strip("\n").replace(",","") # nombre del genoma sin la extension, que sera usado en el diccionario
-		name= genome.split("\t")[0]	
-		#name= name.replace("circular","").replace("chromosome","").replace("complete","").replace("genome","").replace("sequence","").replace("assembly","")
-		genome = genome.split("\t")[1].strip("\n").replace(".fna","").replace(".fasta","").replace(".fa","").replace("faa","").replace("frn","").replace("ffn","")
-		BD_dict[ID]=name+"##"+genome
-
-
-
-	np.save(outputDir+'BD_.dict.npy', BD_dict) 
-
-	if os.path.exists(outputDir+'BD_.dict.npy'):
-		displayedText.set("target sequences database done!!")
-		output_text.update_idletasks()
-		window.update()		
-	else:
-		displayedText.set("Error in target sequences database!!")
-		output_text.update_idletasks()
-		window.update()	
-
-
-
-
-
 def heatmap(savepath,height,width,font_scale,right_scale, bottom_scale):
 	
 
@@ -1094,14 +917,6 @@ def heatmap(savepath,height,width,font_scale,right_scale, bottom_scale):
 	canvas.config(xscrollcommand=hbar.set, yscrollcommand=vbar.set)
 	canvas.pack(side=LEFT,expand=True,fill=BOTH)
 	canvas.pack(expand = YES, fill = BOTH)
-
-
-
-
-
-
-
-
 
 def sequence_alignment(savepath,openpath,querypath, cov, ident):
 	from Bio.Align.Applications import MuscleCommandline
@@ -1274,23 +1089,102 @@ def sequence_alignment(savepath,openpath,querypath, cov, ident):
 	output_text.update_idletasks()
 	window.update()	
 
-
-
-
 def QuitButtonCommand(window):
     window.destroy()
 
+##########################################################################
+#
+#                   Utility functions
+#
+##########################################################################
+
+def change_extension_fasta(path):
+
+	for filen in os.listdir(path):
+		#if file.endswith(".fa") or file.endswith(".fna") :
+		if filen.endswith(".fa") or filen.endswith(".fna") or filen.endswith(".faa"): # CPC2018
+			file_base = os.path.splitext(filen)[0]
+			os.rename(path+"/"+filen, str(path+"/"+file_base) + ".fasta")
+
+def atoi(text):
+	return int(text) if text.isdigit() else text
+
+def natural_keys(text):
+	'''
+	alist.sort(key=natural_keys) sorts in human order
+	http://nedbatchelder.com/blog/200712/human_sorting.html
+	(See Toothy's implementation in the comments)
+	'''
+	return [ atoi(c) for c in re.split('(\d+)', text) ]
+
+def parseResults(file,cov,ident,function): #statsA
+	function = function
+	cov = int(cov)
+	ident = int(ident)
+	numPass = 0
+	line_number=0
+	nCount=0
+	protein_size = 0
+	iden = 0
+	if function == "retrieve_sequences":  	
+		seq = []
+		for line in file:
+			if line_number >= 1:  
+				fields = line.split("\t")
+				qcovhsp = int(fields[13])
+				pident = int(round(float(fields[2])))
+				sequence = fields[15]
+				if int(qcovhsp) > cov and int(pident) > ident: # ajustar los stats al menos 85% #
+					numPass += 1			
+					if "*" in sequence: #take only the sequence before codon stop	
+						sequence = sequence.split("*")[0]
+						seq.append(sequence)
+					else:
+						seq.append(sequence)
+			line_number = line_number +1		
+		if numPass == 0:
+			numPass =1
+			seq.append("NN")	
+		return [numPass,seq] 
 
 
+	if function == "Analysis":  	
+		seq = []
+		coverage = []
+		identity= []			
+		for line in file:
+			if line_number >= 1:        #this is to remove columns legends
+				fields = line.split("\t")
+				qcovhsp = int(fields[13])
+				pident = int(round(float(fields[2])))
+				sequence = fields[15]
+				if int(qcovhsp) > cov and int(pident) > ident: 
+					
+					if	'*' in sequence:     # si el stop codon no se encuentra en el 20% final de la proteina es un pseudogen
+						position = int(sequence.find('*'))
+						
+						if int(round(position/len(sequence)))*100 < 90: 
+							nCount = sequence.count("*") 
 
+						protein_size = int(round(position/len(sequence)))*100 
+					
+					else:				
+						protein_size = qcovhsp	
+					
+					iden = pident
+					numPass += 1			
+					seq.append(sequence)
+					coverage.append(qcovhsp)
+					identity.append(pident)
+			line_number = line_number +1		
+		
+		return [numPass,coverage,identity,seq,nCount,protein_size,iden]	
 
 ##########################################################################
 #
 #                   Tkinter  Widgets and Labels
 #
 ##########################################################################
-
-
 
 Openbutton = Button(window, text="Browse", command=Openfunc)	
 Openbutton.pack()
@@ -1340,7 +1234,7 @@ queryName.place(y = 225, x = 110, width = 400, height = 25)
 
 
 
-Blastbutton = Button(window, text="Blast", command= lambda:  Blast(openpath,savepath,querypath,redo))	
+Blastbutton = Button(window, text="Blast", command= lambda:  Blast(paths_dict, int(redo.get())))	
 Blastbutton.pack()
 Blastbutton.place(y= 325, x=25)
 
@@ -1352,11 +1246,13 @@ redo.set(0)
 
 
 
-logbutton = Button(window, text="log", command= lambda:  iterateDirNs(openpath,savepath,"No"))
+logbutton = Button(window, text="log", command= lambda:  iterateDirNs(paths_dict,
+																	  genomeParser.UPDATELOGNO))
 logbutton.pack()
 logbutton.place(y= 280, x=25)
 
-log_update = Button(window, text="log update", command= lambda:  iterateDirNs(openpath,savepath,"Yes"))
+log_update = Button(window, text="log update", command= lambda:  iterateDirNs(paths_dict,
+																			  genomeParser.UPDATELOGYES))
 log_update.pack()
 log_update.place(y= 280, x=150)
 
@@ -1482,8 +1378,6 @@ protein_listbox1.place(y=600, x= 150)
 #yscroll.grid(row=0, column=1, sticky=N+S)
 #protein_listbox1.configure(yscrollcommand=yscroll.set)
 
-
-
 output_text = Tkinter.Label(window, textvariable=displayedText) # console information
 output_text.pack()
 output_text.configure(background="white",fg="black")
@@ -1492,10 +1386,6 @@ output_text.place(y= 750, x=125, width = 400, height = 35)
 QuitButton = Button(window, text = "Quit", command=lambda: QuitButtonCommand(window))
 QuitButton.pack(anchor='center')
 QuitButton.place(x = 25, y = 750, width = 80, height = 25)
-
-
-
-
 
 window.configure(background='snow2')
 window.mainloop()
