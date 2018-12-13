@@ -126,32 +126,17 @@ def _display(text):
 
 def Openfunc(): 
 	# Open directory where target sequence for blast are stored.
-	#global openpath
-	#openpath = askdirectory() # variable that stores target sequences path
-	#fileopen = "/".join(openpath.split("/")[2::])
 	dirpath = _ask_directory(OpenName, paths_dict, OPENPATH)
-	#OpenName.set(dirpath)
-	#paths_dict[OPENPATH] = dirpath
 	return
 
 def Savefunc():
 	# Directory in which the project will be stored.
-	#global savepath
-	#savepath = askdirectory() # variable that stores project directory
-	#filesave = "/".join(savepath.split("/")[2::])
 	dirpath = _ask_directory(SaveName, paths_dict, SAVEPATH)
-	#SaveName.set(dirpath)
-	#paths_dict[SAVEPATH] = dirpath
 	return
 
 def Queryfunc():
 	# Directory in which the query sequences are stored.
-	#global querypath
-	#querypath = askdirectory() # variable that stores query sequences
-	#Querysave = "/".join(querypath.split("/")[2::])
 	dirpath = _ask_directory(QueryName, paths_dict, QUERYPATH)
-	#QueryName.set(dirpath)
-	#paths_dict[QUERYPATH] = dirpath
 	return
 
 def iterateDirNs(paths_dict, UPDATE):
@@ -169,7 +154,7 @@ def iterateDirNs(paths_dict, UPDATE):
 	
 	try:
 		sys.stderr.write("Before updatelog\n")
-		dict_file = facade.updatelog(outputDir, subjectDir, UPDATE, sys.stderr)
+		dict_file = facade.updatelog(outputDir, subjectDir, UPDATE, sys.stderr) # CPC2018
 		sys.stderr.write("After updatelog\n")
 		
 		if os.path.exists(dict_file):
@@ -181,7 +166,7 @@ def iterateDirNs(paths_dict, UPDATE):
 		sys.stderr.write(str(e)+"\n")
 		_display(str(e))
 	
-	return # CPC2018
+	return
 
 def Blast (paths_dict, REDO):
 	
@@ -205,7 +190,7 @@ def Blast (paths_dict, REDO):
 	
 	facade.Blast(queryDir, subjectDir, outputDir, 
 						   known_query_list, known_target_list,
-						   REDO ,_display, sys.stderr)
+						   REDO ,_display, sys.stderr) # CPC2018
 	
 	tkMessageBox.showinfo("ORTHOPROK","Blast is finished!!")				
 	displayedText.set('Blast is done!!')
