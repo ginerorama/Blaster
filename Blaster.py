@@ -69,12 +69,9 @@ label1 = Label(window, image=imagen1).pack()
 
 ##########################################################################
 #
-#                   Global variables
+#                   Tkinter components
 #
 ##########################################################################
-
-
-current_directory = os.path.dirname(os.path.abspath(__file__))
 
 OpenName = StringVar() # variable that stores target sequences path to show in GUI
 SaveName = StringVar()  # variable that stores project directory to show in GUI
@@ -103,15 +100,16 @@ import src.GenomeParser as genomeParser
 import src.Analyzer as analyzer
 import src.utils as utils
 
-#import Orthoprok_Facade as facade
-
 paths_dict = {}
 known_query_list = []
 known_target_list = []
 
 OPENPATH = "openpath"
+DEFOPENPATH = "/home/gargamelle/Blaster_data"
 SAVEPATH = "savepath"
+DEFSAVEPATH = "/home/gargamelle/Blaster_results"
 QUERYPATH = "querypath"
+DEFQUERYPATH = "/home/gargamelle/Blaster_data/proteins"
 
 def _ask_directory(FieldPath, paths_dict, FIELDPATH):
 	dirpath = askdirectory()
@@ -126,21 +124,6 @@ def _display(text):
 	window.update()
 	return
 
-def Openfunc(): 
-	# Open directory where target sequence for blast are stored.
-	dirpath = _ask_directory(OpenName, paths_dict, OPENPATH)
-	return
-
-def Savefunc():
-	# Directory in which the project will be stored.
-	dirpath = _ask_directory(SaveName, paths_dict, SAVEPATH)
-	return
-
-def Queryfunc():
-	# Directory in which the query sequences are stored.
-	dirpath = _ask_directory(QueryName, paths_dict, QUERYPATH)
-	return
-
 def iterateDirNs(paths_dict, UPDATE):
 	"""
 	Generate the log file input for blaster v2.0
@@ -149,18 +132,16 @@ def iterateDirNs(paths_dict, UPDATE):
 	Arguments: /fasta_files_folder log_basename_file
 
 	"""
-	sys.stderr.write("Log function\n")
 	
 	subjectDir = paths_dict[OPENPATH]+"/"
 	outputDir = paths_dict[SAVEPATH]+"/"
 	
 	try:
-		sys.stderr.write("Before updatelog\n")
 		dict_file = facade.updatelog(outputDir, subjectDir, UPDATE, sys.stderr) # CPC2018
-		sys.stderr.write("After updatelog\n")
 		
 		if os.path.exists(dict_file):
-			_display("target sequences database done!!")
+			_display("Target sequences database done.")
+			sys.stderr.write("Target sequences database done.\n")
 		else:
 			raise Exception("Error in target sequences database!!")
 		
@@ -172,14 +153,14 @@ def iterateDirNs(paths_dict, UPDATE):
 
 def Blast (paths_dict, REDO):
 	
-	sys.stderr.write("Blast command\n")
+	sys.stderr.write("Starting Blast command...\n")
 	
 	querypath = paths_dict[QUERYPATH]
 	savepath = paths_dict[SAVEPATH]
 	openpath = paths_dict[OPENPATH]
 	
-	utils.change_extension_fasta(openpath)
-	utils.change_extension_fasta(querypath)
+	#utils.change_extension_fasta(openpath)
+	#utils.change_extension_fasta(querypath)
 
 	queryDir = querypath+"/"
 	subjectDir = openpath+"/"
@@ -191,8 +172,8 @@ def Blast (paths_dict, REDO):
 		os.makedirs(newpath)
 	
 	facade.Blast(queryDir, subjectDir, outputDir, 
-						   known_query_list, known_target_list,
-						   REDO ,_display, sys.stderr) # CPC2018
+				known_query_list, known_target_list,
+				REDO , _display, sys.stderr) # CPC2018
 	
 	tkMessageBox.showinfo("ORTHOPROK","Blast is finished!!")				
 	displayedText.set('Blast is done!!')
@@ -732,7 +713,8 @@ def QuitButtonCommand(window):
 #
 ##########################################################################
 
-Openbutton = Button(window, text="Browse", command=Openfunc)	
+#Openbutton = Button(window, text="Browse", command=Openfunc)
+Openbutton = Button(window, text="Browse", command=lambda: _ask_directory(OpenName, paths_dict, OPENPATH))
 Openbutton.pack()
 Openbutton.place(y= 125, x=25)
 
@@ -740,15 +722,16 @@ grpahic_label = Label(window,text="/Genomes folder")
 grpahic_label.pack()
 grpahic_label.place(y=150,x=50)
 
-
 pathName = Entry(window, textvariable=OpenName)
 pathName.update()
 pathName.focus_set()
 pathName.pack( anchor='e')
 pathName.place(y = 125, x = 110, width = 400, height = 25)
+OpenName.set(DEFOPENPATH)
+paths_dict[OPENPATH] = DEFOPENPATH
 
-
-Savebutton = Button(window, text="Browse", command=Savefunc)	
+#Savebutton = Button(window, text="Browse", command=Savefunc)
+Savebutton = Button(window, text="Browse", command=lambda: _ask_directory(SaveName, paths_dict, SAVEPATH))
 Savebutton.pack()
 Savebutton.place(y= 175, x=25) 
 
@@ -761,9 +744,11 @@ saveName.update()
 saveName.focus_set()
 saveName.pack( anchor='e')
 saveName.place(y = 175, x = 110, width = 400, height = 25)
+SaveName.set(DEFSAVEPATH)
+paths_dict[SAVEPATH] = DEFSAVEPATH
 
-
-querybutton = Button(window, text="Browse", command=Queryfunc)	
+#querybutton = Button(window, text="Browse", command=Queryfunc)
+querybutton = Button(window, text="Browse", command=lambda: _ask_directory(QueryName, paths_dict, QUERYPATH))
 querybutton.pack()
 querybutton.place(y= 225, x=25) 
 
@@ -777,8 +762,8 @@ queryName.update()
 queryName.focus_set()
 queryName.pack( anchor='e')
 queryName.place(y = 225, x = 110, width = 400, height = 25)
-
-
+QueryName.set(DEFQUERYPATH)
+paths_dict[QUERYPATH] = DEFQUERYPATH
 
 Blastbutton = Button(window, text="Blast", command= lambda:  Blast(paths_dict, int(redo.get())))	
 Blastbutton.pack()

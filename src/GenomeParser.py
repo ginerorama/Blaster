@@ -26,89 +26,82 @@
 import os, sys
 import numpy as np
 
+import utils
+
 UPDATELOGYES = "Yes"
 UPDATELOGNO = "No"
 
 BD_DICT_FILE = 'BD_.dict.npy'
 LOG_FILE = "target_sequences.log"
+DS_STORE = ".DS_Store"
 
 ########## GENOMES LOG
 
 # TODO rename "parse_genomes"
 def updatelog(outputDir, subjectDir, UPDATE, err = sys.stderr):
 	
-	err.write("Orthoprok_Facade updatelog\n")
-	
 	if UPDATE == UPDATELOGNO:
-		_update_log(outputDir, subjectDir)
+		err.write("Start parsing target genomes...\n")
+		_update_log(outputDir, subjectDir, err)
 		err.write("Finished parsing target genomes.\n")
 		
 	dict_file = _create_seqs_dir(outputDir, err)
 	
 	return dict_file
 
-# TODO: refactor
-def _update_log(outputDir, subjectDir):
+def _update_log(outputDir, subjectDir, err):
 	
-	sys.stderr.write("\tupdate --> NO\n")
-	
-	output = open(outputDir+"target_sequences.log","wr")
-	
-	for i in os.listdir(subjectDir):
+	with open(outputDir+LOG_FILE,"wr") as output:
 		
-		if i == ".DS_Store": continue # CPC2018
-		
-		sys.stderr.write("\tdir --> "+str(i)+"\n")
-		
-		path = os.path.abspath(subjectDir+i)
-		name = os.path.splitext(i)[0]
-		extension = os.path.splitext(i)[1]
-
-		#check for gz files from ncbi
-		# TODO: rename "file" vars
-		if extension == ".gz":
+		for i in os.listdir(subjectDir):
 			
-			print "comprised gz file found\nuncompressing...(This could take some time!!"
-			file = gzip.open(path,"rb")
-			file = file.read()
-			uncompressed_file = open(subjectDir+name,"w")
-			uncompressed_file.write(str(file))
-		else:	
-			file = (open(path,"r")).readline()
-
-		#read the files and check for fasta files
-		if ">" not in file[0]:
-			# TODO: raise exception
-			displayedText.set("ERROR: " + name+ " is not a fasta file")
-			output_text.update_idletasks()
-			window.update()
-		else:
-			fasta_header = file.split("\n")[0][1::]
-			name_fasta= (" ".join(fasta_header.split(" ")[1::]).split(",")[0].split(".")[0].split("_")[0])
-			name_fasta= name_fasta.replace("circular","").replace("chromosome","").replace("complete","").replace("genome","").replace("sequence","").replace("assembly","")
-		#	output.write(str(name)+"\t"+str(path)+"\t"+str(fasta_header)+"\n")		
-			output.write(str(name_fasta)+"\t"+str(path)+"\t"+str(name)+"\n")
-			sys.stderr.write(str(name_fasta)+"\t"+str(path)+"\t"+str(name)+"\n")
-		
-	output.close()
+			if i == DS_STORE: continue # CPC2018
+			if not utils.is_fasta(i): continue
+			
+			fullpath = subjectDir+i
+			
+			if not os.path.isfile(fullpath): continue
+			
+			fafile = os.path.abspath(fullpath)
+			name = os.path.splitext(i)[0]
+			extension = os.path.splitext(i)[1]
+	
+			#check for gz files from ncbi
+			# TODO: rename "file" vars
+			if extension == ".gz":
+				fafile = utils.uncompress_file(fafile, subjectDir+name)
+			
+			fafileheader = ""
+			with open(fafile,"r") as fafileopen:
+				fafileheader = fafileopen.readline().strip()
+	
+			#read the files and check for fasta files
+			if ">" not in fafileheader[0]:
+				raise Exception("ERROR: " + name + " is not a fasta file")
+			else:
+				target_name = _get_target_name(fafileheader)
+				
+				fasta_record = "\t".join([target_name, fafile, name])
+				#if VERBOSE: err.write(fasta_record+"\n")
+				
+				output.write(fasta_record+"\n")
 	
 	return
 
-def _replace_fasta(text):
-	reptext = ""	
-	mapping = [
-		('.fna', ''),
-		('.fasta', ''),
-		('.fa', ''),
-		('faa', ''),
-		('frn', ''),
-		('ffn', '')
-		]
+def _get_target_name(fafileheader):
+	fasta_header = fafileheader[1:]
+	name_fasta = (" ".join(fasta_header.split(" ")[1:]).split(",")[0].split(".")[0].split("_")[0])
 	
-	for k, v in mapping:
-		reptext = text.replace(k, v)
-		
-	return reptext
+	replist = [("circular",""),
+		("chromosome",""),
+		("complete",""),
+		("genome",""),
+		("sequence",""),
+		("assembly","")]
+	
+	name_fasta = utils.replace_list(name_fasta, replist)
+	
+	return name_fasta
 	
 def _create_seqs_dir(outputDir, err):
 	"""
@@ -125,13 +118,14 @@ def _create_seqs_dir(outputDir, err):
 			BD_dict = {}
 			for genome in selected_genomes:
 				
-				err.write("\t"+str(genome)+"\n")
-				
 				genome_data = genome.strip().split("\t")
 				genome_name = genome_data[0]
-				genome_path = _replace_fasta(genome_data[1])
-				genome_ID = genome_data[2].replace(",","") # nombre del genoma sin la extension, que sera usado en el diccionario
-				BD_dict[genome_ID] = genome_name+"##"+genome_path
+				genome_path = utils.replace_fasta(genome_data[1])
+				genome_ID = genome_data[2] #.replace(",","") CPC2018 
+				# nombre del genoma sin la extension, que sera usado en el diccionario
+				#if VERBOSE: err.write("\t"+genome_ID+"\n")
+				genome_value = "##".join([genome_name, genome_path])
+				BD_dict[genome_ID] = genome_value
 			
 			np.save(dict_file, BD_dict)
 			
@@ -143,5 +137,5 @@ def _create_seqs_dir(outputDir, err):
 	# TODO makeblastdb of all the targets
 	
 	return dict_file
-
+	
 ## END

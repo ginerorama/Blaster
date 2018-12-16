@@ -26,37 +26,55 @@
 #OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #SOFTWARE.
 
-##########################################################################
-#
-#                   Import  Modules
-#
-##########################################################################
-
-import Tkinter, tkFileDialog, Tkconstants 
-from tkFileDialog import *
-from tkFileDialog import askopenfilename
-from Tkinter import *
-from ttk import *
-import tkMessageBox
-import os,sys
-import numpy as np
-import pandas as pd
-import re
-from Bio import SeqIO
-from PIL import Image, ImageTk
-
-# CPC2018
+import os, sys, re
 import gzip
 
-import subprocess
+def replace_list(text, replist):
+	reptext = text
+	
+	for k, v in replist:
+		reptext = reptext.replace(k, v)
+		
+	return reptext
+
+def replace_fasta(text):
+	reptext = ""
+	mapping = [
+		('.fna', ''),
+		('.fasta', ''),
+		('.fa', ''),
+		('faa', ''),
+		('frn', ''),
+		('ffn', '')
+		]
+	
+	reptext = replace_list(text, mapping)
+		
+	return reptext
+
+def uncompress_file(gzfile, ungzfile):
+	with gzip.open(path, 'rb') as gzfile:
+		with open(ungzfile, 'w') as uncompressed_file:
+			uncompressed_file.write(str(gzfile.read()))
+			
+	return ungzfile
+
+def is_short_fasta(filen):
+	return filen.endswith(".fna") or filen.endswith(".fa")
+
+def is_fasta(filen):
+	return filen.endswith(".fna") or filen.endswith(".fasta") or filen.endswith(".fa")
 
 def change_extension_fasta(path):
 
 	for filen in os.listdir(path):
 		#if file.endswith(".fa") or file.endswith(".fna") :
-		if filen.endswith(".fa") or filen.endswith(".fna") or filen.endswith(".faa"): # CPC2018
+		if is_short_fasta(filen):
 			file_base = os.path.splitext(filen)[0]
-			os.rename(path+"/"+filen, str(path+"/"+file_base) + ".fasta")
+			#os.rename(path+"/"+filen, str(path+"/"+file_base) + ".fasta")
+			os.rename(path+"/"+filen, path+"/"+file_base+".fasta")
+			
+	return
 
 def atoi(text):
 	return int(text) if text.isdigit() else text

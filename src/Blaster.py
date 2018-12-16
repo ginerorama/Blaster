@@ -24,11 +24,10 @@
 #SOFTWARE.
 
 import os, sys
-import numpy as np
 from Bio.Blast.Applications import NcbiblastnCommandline
 
-BD_DICT_FILE = 'BD_.dict.npy'
-LOG_FILE = "target_sequences.log"
+import GenomeParser as genomeParser
+import utils
 
 # CPC2018
 BLAST_OUTFMT='"6 qseqid sseqid pident length \
@@ -46,15 +45,14 @@ def Blast(queryDir, subjectDir, outputDir,
 		  known_query_list, known_target_list,
 		  redo, displayf, err = sys.stderr):
 	
-	count = 0
-	
 	err.write("\tReading list of queries...\n")
 	# CPC2018
 	queries_list = [name for name in os.listdir(queryDir)
-					if name != ".DS_Store" and
-					os.path.isfile(os.path.join(queryDir, name))]
+					if name != genomeParser.DS_STORE and
+					os.path.isfile(os.path.join(queryDir, name)) and
+					utils.is_fasta(name)]
 	
-	totalfiles = len(queries_list)-1 # CPC2018
+	totalfiles = len(queries_list) # -1 # CPC2018
 	
 	err.write("\tTotal queries found: "+str(totalfiles)+"\n")
 	
@@ -65,23 +63,28 @@ def Blast(queryDir, subjectDir, outputDir,
 	target_tmp_list = []
 	
 	#for i in os.listdir(queryDir):
+	count = 0
 	for i in queries_list: # CPC2018
-		if i == ".DS_Store": continue # CPC2018
+		#if i == ".DS_Store": continue # CPC2018
 		
 		count += 1
 		displayf("Running blast: "+str(count)+" of "+str(totalfiles)+" sequences")
-		queryFile = queryDir+i
+		#queryFile = queryDir+i
 		try: 		
 			queryFile = '"'+queryDir+i+'"'
 			queryName = os.path.splitext(i)[0]# cuidado si interaccionas con los ficheros en finder y aparece DS_store aqui fallara hayq eliminar los DS_store files antes
 			#for j in os.listdir(subjectDir):
 			for j in targets_list:
-				if _is_target_fasta(j) and _redo(redo, i, known_query_list, j, known_target_list): # CPC2018
+				if utils.is_fasta(j) and _redo(redo, i, known_query_list, j, known_target_list): # CPC2018
 					targetName = os.path.splitext(j)[0] # CPC2018
 					subjectFile = '"'+subjectDir+j+'"'
-					sys.stderr.write("\tRunning blast: "+str(queryName)+" --> "+str(targetName)+"\n")
+					
+					err.write("\tRunning blast: "+str(queryName)+" --> "+str(targetName)+"\n")
+					
 					_tblastn(queryName, queryFile, targetName, subjectFile, outputDir)
-					sys.stderr.write("\tBlast finished: "+str(queryName)+" --> "+str(targetName)+"\n")
+					
+					err.write("\tBlast finished: "+str(queryName)+" --> "+str(targetName)+"\n")
+					
 					# CPC2018					
 					if targetName not in set(target_tmp_list):
 						target_tmp_list.append(targetName)
@@ -98,12 +101,9 @@ def Blast(queryDir, subjectDir, outputDir,
 		if target not in set(known_target_list):
 			known_target_list.append(target)
 	
-	sys.stderr.write("Finished blast of all queries and targets.\n")
+	err.write("Finished blast of all queries and targets.\n")
 	
 	return
-
-def _is_target_fasta(target):
-	return target.endswith(".fna") or target.endswith(".fasta") or target.endswith(".fa")
 
 def _redo(redo, query, known_query_list, target, known_target_list):
 	return (redo == 0 or \
@@ -119,10 +119,11 @@ def _tblastn(queryName, queryFile, targetName, subjectFile, outputDir):
 										evalue=BLAST_EVALUE,
 										num_threads=BLAST_NUMTHREADS)
 	stdout, stderr = blastn_cline()
+	
 	outFileName = outputDir+queryName+"##"+targetName+".txt"
-	f = open(outFileName,'w')
-	f.write(BLAST_HEADER+"\n"+stdout)
-	f.close()
+	with open(outFileName,'w') as f:
+		f.write(BLAST_HEADER+"\n"+stdout)
+	
 	return
 
 ## END
