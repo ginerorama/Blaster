@@ -38,62 +38,13 @@ from tkFileDialog import askopenfilename
 from Tkinter import *
 from ttk import *
 import tkMessageBox
-import os,sys
+import os, sys
 import numpy as np
 import pandas as pd
-import re
 from Bio import SeqIO
 from PIL import Image, ImageTk
 
-# CPC2018
-import gzip
-
 import subprocess
-
-##########################################################################
-#
-#                   Initzialize main Tkinter window
-#
-##########################################################################
-
-window=Tkinter.Tk()
-window.geometry("600x800")
-window.title("Blaster")
-dir_path = os.path.dirname(os.path.realpath(__file__))
-imagen1=PhotoImage(file=dir_path+"/orthoprok.gif") 
-label1 = Label(window, image=imagen1).pack() 
-
-#s = Style()
-#s.theme_names()
-#s.theme_use('aqua')
-
-##########################################################################
-#
-#                   Tkinter components
-#
-##########################################################################
-
-OpenName = StringVar() # variable that stores target sequences path to show in GUI
-SaveName = StringVar()  # variable that stores project directory to show in GUI
-QueryName = StringVar() # variable that stores query sequences to show in GUI
-displayedText = StringVar()
-height = IntVar()
-width = IntVar()
-font_scale = DoubleVar()
-right_scale = DoubleVar()
-bottom_scale = DoubleVar()
-cov = IntVar() 
-ident = IntVar() 
-function = StringVar()
-redo = IntVar()
-collapsed =IntVar()
-absence = IntVar()
-
-##########################################################################
-#
-#                   Commands
-#
-##########################################################################
 
 import src.Facade as facade
 import src.GenomeParser as genomeParser
@@ -123,6 +74,12 @@ def _display(text):
 	output_text.update_idletasks()
 	window.update()
 	return
+
+##########################################################################
+#
+#                   Commands
+#
+##########################################################################
 
 def iterateDirNs(paths_dict, UPDATE):
 	"""
@@ -703,6 +660,45 @@ def sequence_alignment(savepath,openpath,querypath, cov, ident):
 	displayedText.set('Sequence alignment is done!!')
 	output_text.update_idletasks()
 	window.update()	
+
+##########################################################################
+#
+#                   Initzialize main Tkinter window
+#
+##########################################################################
+
+window=Tkinter.Tk()
+window.geometry("600x800")
+window.title("Blaster")
+dir_path = os.path.dirname(os.path.realpath(__file__))
+imagen1=PhotoImage(file=dir_path+"/orthoprok.gif") 
+label1 = Label(window, image=imagen1).pack() 
+
+#s = Style()
+#s.theme_names()
+#s.theme_use('aqua')
+
+##########################################################################
+#
+#                   Tkinter components
+#
+##########################################################################
+
+OpenName = StringVar() # variable that stores target sequences path to show in GUI
+SaveName = StringVar()  # variable that stores project directory to show in GUI
+QueryName = StringVar() # variable that stores query sequences to show in GUI
+displayedText = StringVar()
+height = IntVar()
+width = IntVar()
+font_scale = DoubleVar()
+right_scale = DoubleVar()
+bottom_scale = DoubleVar()
+cov = IntVar() 
+ident = IntVar() 
+function = StringVar()
+redo = IntVar()
+collapsed =IntVar()
+absence = IntVar()
 
 ##########################################################################
 #
