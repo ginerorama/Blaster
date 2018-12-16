@@ -159,8 +159,8 @@ def Blast (paths_dict, REDO):
 	savepath = paths_dict[SAVEPATH]
 	openpath = paths_dict[OPENPATH]
 	
-	#utils.change_extension_fasta(openpath)
-	#utils.change_extension_fasta(querypath)
+	utils.change_extension_fasta(openpath)
+	utils.change_extension_fasta(querypath)
 
 	queryDir = querypath+"/"
 	subjectDir = openpath+"/"
@@ -200,7 +200,7 @@ def analysis(paths_dict, cov, ident, collapsed, absence, height, width): #statsA
 
 	tkMessageBox.showinfo("ORTHOPROK","analysis is done!!")
 
-# load the protein listbox with data
+	# load the protein listbox with data
 	df_protein = pd.read_csv(analyzer.get_file5(savepath))
 
 	protein_list= df_protein.ix[:,2::].columns.tolist()
@@ -213,7 +213,6 @@ def analysis(paths_dict, cov, ident, collapsed, absence, height, width): #statsA
 	photo = ImageTk.PhotoImage(image)
 	#image not visual
 	
-
 	canvas = Canvas(novi, width = (width*100), height = (height*100),
 					scrollregion = (0,0,(width*100),(height*100)))
 	canvas.create_image(0, 0,image = photo, anchor="nw")
@@ -225,17 +224,13 @@ def analysis(paths_dict, cov, ident, collapsed, absence, height, width): #statsA
 	vbar=Scrollbar(novi,orient=VERTICAL)
 	vbar.pack(side=RIGHT,fill=Y)
 	vbar.config(command=canvas.yview)
-	
-	
-
-	
+		
 	canvas.config(width=900,height=600)
 	canvas.config(xscrollcommand=hbar.set, yscrollcommand=vbar.set)
 	canvas.pack(side=LEFT,expand=True,fill=BOTH)
 	canvas.pack(expand = YES, fill = BOTH)
-
-
-
+	
+	return
 
 def protein_length_graphic(savepath,height,width,font_scale):
 
@@ -339,6 +334,8 @@ def protein_length_graphic(savepath,height,width,font_scale):
 			plt.close()
 
 	displayedText.set('Protein plot done!!')
+	
+	return
 
 def stripplot (savepath,height,width):
 
@@ -414,7 +411,8 @@ def stripplot (savepath,height,width):
 	canvas.config(xscrollcommand=hbar.set, yscrollcommand=vbar.set)
 	canvas.pack(side=LEFT,expand=True,fill=BOTH)
 	canvas.pack(expand = YES, fill = BOTH)
-
+	
+	return
 
 def heatmap(savepath,height,width,font_scale,right_scale, bottom_scale):
 	
@@ -532,6 +530,8 @@ def heatmap(savepath,height,width,font_scale,right_scale, bottom_scale):
 	canvas.config(xscrollcommand=hbar.set, yscrollcommand=vbar.set)
 	canvas.pack(side=LEFT,expand=True,fill=BOTH)
 	canvas.pack(expand = YES, fill = BOTH)
+	
+	return
 
 def sequence_alignment(savepath,openpath,querypath, cov, ident):
 	from Bio.Align.Applications import MuscleCommandline
@@ -703,9 +703,6 @@ def sequence_alignment(savepath,openpath,querypath, cov, ident):
 	displayedText.set('Sequence alignment is done!!')
 	output_text.update_idletasks()
 	window.update()	
-
-def QuitButtonCommand(window):
-    window.destroy()
 
 ##########################################################################
 #
@@ -915,7 +912,7 @@ output_text.pack()
 output_text.configure(background="white",fg="black")
 output_text.place(y= 750, x=125, width = 400, height = 35)
 
-QuitButton = Button(window, text = "Quit", command=lambda: QuitButtonCommand(window))
+QuitButton = Button(window, text = "Quit", command=lambda: window.destroy())#lambda: QuitButtonCommand(window))
 QuitButton.pack(anchor='center')
 QuitButton.place(x = 25, y = 750, width = 80, height = 25)
 
