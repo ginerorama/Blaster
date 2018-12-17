@@ -71,13 +71,13 @@ def Blast(queryDir, subjectDir, outputDir,
 		displayf("Running blast: "+str(count)+" of "+str(totalfiles)+" sequences")
 		#queryFile = queryDir+i
 		try: 		
-			queryFile = '"'+queryDir+i+'"'
+			queryFile = '"'+queryDir+"/"+i+'"'
 			queryName = os.path.splitext(i)[0]# cuidado si interaccionas con los ficheros en finder y aparece DS_store aqui fallara hayq eliminar los DS_store files antes
 			#for j in os.listdir(subjectDir):
 			for j in targets_list:
 				if utils.is_fasta(j) and _redo(redo, i, known_query_list, j, known_target_list): # CPC2018
 					targetName = os.path.splitext(j)[0] # CPC2018
-					subjectFile = '"'+subjectDir+j+'"'
+					subjectFile = '"'+subjectDir+"/"+j+'"'
 					
 					err.write("\tRunning blast: "+str(queryName)+" --> "+str(targetName)+"\n")
 					
@@ -120,7 +120,7 @@ def _tblastn(queryName, queryFile, targetName, subjectFile, outputDir):
 										num_threads=BLAST_NUMTHREADS)
 	stdout, stderr = blastn_cline()
 	
-	outFileName = outputDir+queryName+"##"+targetName+".txt"
+	outFileName = outputDir+"/"+queryName+"##"+targetName+".txt"
 	with open(outFileName,'w') as f:
 		f.write(BLAST_HEADER+"\n"+stdout)
 	

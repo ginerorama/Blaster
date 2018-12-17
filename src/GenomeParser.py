@@ -35,30 +35,40 @@ BD_DICT_FILE = 'BD_.dict.npy'
 LOG_FILE = "target_sequences.log"
 DS_STORE = ".DS_Store"
 
+def get_bd_dict_file(savepath):
+	return savepath+"/"+BD_DICT_FILE
+
+def get_log_file(savepath):
+	return savepath+"/"+LOG_FILE
+
+def get_ds_store(savepath):
+	return savepath+"/"+DS_STORE
+
 ########## GENOMES LOG
 
 # TODO rename "parse_genomes"
-def updatelog(outputDir, subjectDir, UPDATE, err = sys.stderr):
+def updatelog(savepath, openpath, UPDATE, err = sys.stderr):
 	
 	if UPDATE == UPDATELOGNO:
 		err.write("Start parsing target genomes...\n")
-		_update_log(outputDir, subjectDir, err)
+		_update_log(savepath, openpath, err)
 		err.write("Finished parsing target genomes.\n")
 		
-	dict_file = _create_seqs_dir(outputDir, err)
+	dict_file = _create_seqs_dir(savepath, err)
 	
 	return dict_file
 
 def _update_log(outputDir, subjectDir, err):
 	
-	with open(outputDir+LOG_FILE,"wr") as output:
+	log_file = get_log_file(outputDir)
+	with open(log_file,"wr") as output:
 		
 		for i in os.listdir(subjectDir):
 			
 			if i == DS_STORE: continue # CPC2018
 			if not utils.is_fasta(i): continue
 			
-			fullpath = subjectDir+i
+			fullpath = subjectDir+"/"+i
 			
 			if not os.path.isfile(fullpath): continue
 			
@@ -69,7 +79,7 @@ def _update_log(outputDir, subjectDir, err):
 			#check for gz files from ncbi
 			# TODO: rename "file" vars
 			if extension == ".gz":
-				fafile = utils.uncompress_file(fafile, subjectDir+name)
+				fafile = utils.uncompress_file(fafile, subjectDir+"/"+name)
 			
 			fafileheader = ""
 			with open(fafile,"r") as fafileopen:
@@ -110,8 +120,8 @@ def _create_seqs_dir(outputDir, err):
 	
 	err.write("Creating target sequences dictionary...\n")
 	
-	dict_file = outputDir+BD_DICT_FILE
-	log_file = outputDir+LOG_FILE
+	dict_file = get_bd_dict_file(outputDir)
+	log_file = get_log_file(outputDir)
 	
 	try:
 		with open(log_file, 'r') as selected_genomes:

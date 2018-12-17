@@ -40,7 +40,15 @@ FILE3 = "/HitsPresence.csv"
 FILE4 = "/HitsPseudo.csv"
 FILE5 = "/Proteins_size.csv"
 FILE6 = "/Proteins_ident.csv"
-
+ABS_COLLAPSE = 'absence_for_collapse.csv'
+PSEUDO_COLLAPSE = 'pseudo_for_collapse.csv'
+ABSFILE = 'groupbyserovar_1normalized_absence.csv'
+MERGEFILE = 'groupbyserovar_1normalized_merge.csv'
+PSEUDOFILE = 'groupbyserovar_1normalized_pseudo.csv'
+SUMMARY_STATS = 'summarystats.csv'
+GRAPHIC_STATS_PDF = "graphic_stats.pdf"
+GRAPHIC_STATS_TIF = "graphic_stats.tif"
+	
 def get_resultspath(savepath):
 	return savepath+RESULTS_PATH
 
@@ -71,8 +79,31 @@ def get_file5(savepath):
 def get_file6(savepath):
 	return get_resultspath(savepath)+FILE6
 
-def get_dictfile(savepath):
-	return savepath+"/"+genomeParser.BD_DICT_FILE
+def get_abs_collapse(savepath):
+	return get_tmpfiles(savepath)+"/"+ABS_COLLAPSE
+
+def get_pseudo_collapse(savepath):
+	return get_tmpfiles(savepath)+"/"+PSEUDO_COLLAPSE
+
+def get_absfile(savepath):
+	return get_tmpfiles(savepath)+"/"+ABSFILE
+
+def get_mergefile(savepath):
+	return get_tmpfiles(savepath)+"/"+MERGEFILE
+
+def get_pseudofile(savepath):
+	return get_tmpfiles(savepath)+"/"+PSEUDOFILE
+
+def get_summary_stats(savepath):
+	return get_resultspath(savepath)+"/"+SUMMARY_STATS
+
+def get_graphic_stats_pdf(savepath):
+	return get_resultspath(savepath)+"/"+GRAPHIC_STATS_PDF
+
+def get_graphic_stats_tif(savepath):
+	return get_tmpfiles(savepath)+"/"+GRAPHIC_STATS_TIF
+
+#########
 
 def analysis(savepath, cov, ident, collapsed, absence, err):
 	
@@ -123,7 +154,7 @@ def analysis(savepath, cov, ident, collapsed, absence, err):
 	que_list=[]
 
 	#print resHash
-	BD_dict = np.load(get_dictfile(savepath)).item()
+	BD_dict = np.load(genomeParser.get_bd_dict_file(savepath)).item()
 
 	first = True
 	head = ["Assembly,Name"]
@@ -229,10 +260,8 @@ def analysis(savepath, cov, ident, collapsed, absence, err):
 							)
 						f2.write("\n")			
 					f2.write("\n\n")
-		f2.close()			
-
-
-
+		f2.close()
+		
 	#####################################
 	#####statisctisA
 
@@ -268,7 +297,7 @@ def analysis(savepath, cov, ident, collapsed, absence, err):
 		df_result.ix[0,protein]=total_presence
 
 	### esta tabla se usara en csv_groupby para generar tabla de ausencia collapse
-	df1.to_csv(tmpfiles+'absence_for_collapse.csv')
+	df1.to_csv(get_abs_collapse(savepath))
 
 
 	# modify df1 to conver values greater than 1 in 1, and 0 in 0 for stop_codon_pseudo
@@ -288,20 +317,17 @@ def analysis(savepath, cov, ident, collapsed, absence, err):
 	
 
 	### esta tabla se usara en csv_groupby para generar tabla de pseudogenes for collapse
-	df2.to_csv(tmpfiles+'pseudo_for_collapse.csv')
+	df2.to_csv(get_pseudo_collapse(savepath))
 
 	## save the df_result
-	df_result.to_csv(resultspath+'summarystats.csv')	
-
-
-
+	df_result.to_csv(get_summary_stats(savepath))
+	
 	## Graphication phase
 	import matplotlib.pyplot as plt
 
 	#volvemos a cargar el archivo para graficar porque sino no se ajustan las coordenadas a la hora de graficar
-	df_result = pd.read_csv(resultspath+'summarystats.csv')
-
-
+	df_result = pd.read_csv(get_summary_stats(savepath))
+	
 	fig1 = plt.figure(figsize = (9,7))
 	plt.subplots_adjust(hspace=1.4)
 	p1 = plt.subplot(2,1,1)
@@ -322,20 +348,20 @@ def analysis(savepath, cov, ident, collapsed, absence, err):
 		ttl = plt.suptitle("Absent proteins and pseudogens distribution in DataBase")
 	else:
 		ttl = plt.suptitle("Proteins presents and pseudogens distribution in DataBase")
-
-
-	
-	figure = resultspath+"graphic_stats.pdf"
-	figure_2 = tmpfiles+"graphic_stats.tif"
+		
+	graphic_stats_pdf = get_graphic_stats_pdf(savepath)
+	graphic_stats_tif = get_graphic_stats_tif(savepath)
+	figure = graphic_stats_pdf
+	figure_2 = graphic_stats_tif
 	if not os.path.exists(figure):
-		fig1.savefig(resultspath+'graphic_stats.pdf')
-		fig1.savefig(tmpfiles+"graphic_stats.tif")
+		fig1.savefig(graphic_stats_pdf)
+		fig1.savefig(graphic_stats_tif)
 		
 		plt.close()
 	else:
 		os.remove(figure)
-		fig1.savefig(resultspath+'graphic_stats.pdf')
-		fig1.savefig(tmpfiles+"graphic_stats.tif")
+		fig1.savefig(graphic_stats_pdf)
+		fig1.savefig(graphic_stats_tif)
 		
 		plt.close()
 	
@@ -344,8 +370,8 @@ def analysis(savepath, cov, ident, collapsed, absence, err):
 	#####################
 	#csvgroupby
 
-	df = pd.read_csv(tmpfiles+'absence_for_collapse.csv', index_col = 0)
-	df_pseudo = pd.read_csv(tmpfiles+'pseudo_for_collapse.csv', index_col = 0)
+	df = pd.read_csv(get_abs_collapse(savepath), index_col = 0)
+	df_pseudo = pd.read_csv(get_pseudo_collapse(savepath), index_col = 0)
 
 
 
@@ -385,8 +411,9 @@ def analysis(savepath, cov, ident, collapsed, absence, err):
 	df_merge['Count']= df_merge['Count'].astype(str)
 	df_merge['Serovar'] = df_merge[['Serovar', 'Count']].apply(lambda x: '_'.join(x), axis=1)
 	df_merge = df_merge.set_index('Serovar')
-	df_merge= df_merge.drop('Count', 1) 
-	df_merge.to_csv(tmpfiles+'groupbyserovar_1normalized_merge.csv')
+	df_merge= df_merge.drop('Count', 1)
+	df_merge = df_merge.drop('Genome_file', 1)
+	df_merge.to_csv(get_mergefile(savepath))
 
 	
 
@@ -412,8 +439,9 @@ def analysis(savepath, cov, ident, collapsed, absence, err):
 		df['Serovar'] = df[['Serovar', 'Count']].apply(lambda x: '_'.join(x), axis=1)
 	
 	df = df.set_index('Serovar')
-	df= df.drop('Count', 1) 
-	df.to_csv(tmpfiles+ 'groupbyserovar_1normalized_absence.csv')
+	df = df.drop('Genome_file', 1)
+	df = df.drop('Count', 1) 
+	df.to_csv(get_absfile(savepath))
 
 
 
@@ -421,8 +449,9 @@ def analysis(savepath, cov, ident, collapsed, absence, err):
 	df_pseudo['Count']= df_pseudo['Count'].astype(str)
 	df_pseudo['Serovar'] = df_pseudo[['Serovar', 'Count']].apply(lambda x: '_'.join(x), axis=1)
 	df_pseudo = df_pseudo.set_index('Serovar')
-	df_pseudo= df_pseudo.drop('Count', 1) 
-	df_pseudo.to_csv(tmpfiles+'groupbyserovar_1normalized_pseudo.csv')
+	df_pseudo= df_pseudo.drop('Count', 1)
+	df_pseudo = df_pseudo.drop('Genome_file', 1)
+	df_pseudo.to_csv(get_pseudofile(savepath))
 	
 	if os.path.exists(outputFile) and os.path.exists(outputFile2) :
 		pass

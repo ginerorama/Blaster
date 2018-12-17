@@ -29,13 +29,14 @@ import GenomeParser as genomeParser
 import Blaster as blaster
 import Analyzer as analyzer
 import AlignmentGenerator as alignmentGenerator
+import Plotter as plotter
 
 ########## GENOMES LOG
 
 # TODO Rename "parse_genomes"
-def updatelog(outputDir, subjectDir, UPDATE, err = sys.stderr):
+def updatelog(savepath, openpath, UPDATE, err = sys.stderr):
 	# returns dict_file
-	return genomeParser.updatelog(outputDir, subjectDir, UPDATE, err)
+	return genomeParser.updatelog(savepath, openpath, UPDATE, err)
 
 ######## BLAST
 
@@ -55,8 +56,26 @@ def analysis(savepath, cov, ident, collapsed, absence, err = sys.stderr):
 
 ###### Sequence alignment
 
-def sequence_alignment(savepath, querypath, cov, ident, display, err):
+def sequence_alignment(savepath, querypath, cov, ident, display, err = sys.stderr):
 	
 	return alignmentGenerator.sequence_alignment(savepath, querypath, cov, ident, display, err)
+
+#######
+
+def protein_length_graphic(prot_name, savepath, height, width, font_scale, err = sys.stderr):
+	
+	return plotter.protein_length_graphic(prot_name, savepath, height, width, font_scale, err)
+
+#######
+
+def stripplot(savepath, height, width, err = sys.stderr):
+	return plotter.stripplot(savepath, height, width, err)
+
+#######
+
+def heatmap(savepath, height, width, font_scale, right_scale, bottom_scale, err = sys.stderr):
+	
+	return plotter.heatmap(savepath, height, width,
+						   font_scale, right_scale, bottom_scale, err)
 
 ## END

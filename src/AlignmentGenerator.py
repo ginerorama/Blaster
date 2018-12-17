@@ -101,7 +101,7 @@ def sequence_alignment(savepath, querypath, cov, ident, display, err = sys.stder
 	count = 0
 	genomes =[]		
 	# Generate the Sequence_dict containing the sequence for align clasified by protein instead of genome sequence.							
-	BD_dict = np.load(savepath+genomeParse.BD_DICT_FILE).item()
+	BD_dict = np.load(genomeParser.get_bd_dict_file(savepath)).item()
 	for genome_seq in sorted(presence_dict,key=utils.natural_keys):
 		if genome_seq in BD_dict:	
 			genome = [genome_seq][0]
@@ -167,15 +167,15 @@ def sequence_alignment(savepath, querypath, cov, ident, display, err = sys.stder
 	# output_text.update_idletasks()
 	# window.update()
 	
-	for file in os.listdir(seq_resultspath):
-		if file.endswith(".fasta"):
-			filename = os.path.splitext(file)[0]
+	for filen in os.listdir(seq_resultspath):
+		if filen.endswith(".fasta"):
+			filename = os.path.splitext(filen)[0]
 			res_fasta = get_muscle_align_fasta(savepath, filename)			
 			res_txt = get_muscle_align_text(savepath, filename)
 			res_html = get_muscle_align_html(savepath, filename)
 			res_dat = get_muscle_align_dat(savepath, filename)
 			
-			file2 = seq_resultspath+file
+			file2 = seq_resultspath+filen
 			print file2
 			muscle_cline = MuscleCommandline(input=file2,fastaout=res_fasta, clwout=res_txt, htmlout=res_html)
 			os.system(str(muscle_cline) +">/dev/null 2>&1") 				
@@ -188,12 +188,12 @@ def sequence_alignment(savepath, querypath, cov, ident, display, err = sys.stder
 	# displayedText.set('mview alignment running!!')
 	# output_text.update_idletasks()
 	# window.update()	
-	for file in os.listdir(tmpfiles):   
-		if file.endswith(".dat"):
-			filename = os.path.splitext(file)[0]			
+	for filen in os.listdir(tmpfiles):   
+		if filen.endswith(".dat"):
+			filename = os.path.splitext(filen)[0]			
 			res_html = outputDir2+filename+"_mview_align.html"
 			with open(res_html,"wb") as out, open("stderr.txt","wb") as err:
-	  			subprocess.Popen(["mview","-in","fasta","-html","head","-css","on","-coloring","any","-threshold", "90",tmpfiles+file],stdout=out,stderr=err)					
+	  			subprocess.Popen(["mview","-in","fasta","-html","head","-css","on","-coloring","any","-threshold", "90",tmpfiles+filen],stdout=out,stderr=err)					
 	
 	#try:
 	#	subprocess.call(["ete3"])
