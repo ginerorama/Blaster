@@ -433,7 +433,7 @@ def analysis(savepath, cov, ident, collapsed, absence, err):
 
 	return
 
-def parseResults(file, cov, ident,function): #statsA
+def parseResults(file, cov, ident, function): #statsA
 	function = function
 	cov = int(cov)
 	ident = int(ident)

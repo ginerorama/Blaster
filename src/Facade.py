@@ -28,6 +28,7 @@ import sys
 import GenomeParser as genomeParser
 import Blaster as blaster
 import Analyzer as analyzer
+import AlignmentGenerator as alignmentGenerator
 
 ########## GENOMES LOG
 
@@ -51,5 +52,11 @@ def Blast(queryDir, subjectDir, outputDir,
 def analysis(savepath, cov, ident, collapsed, absence, err = sys.stderr):
 	
 	return analyzer.analysis(savepath, cov, ident, collapsed, absence, err)
+
+###### Sequence alignment
+
+def sequence_alignment(savepath, querypath, cov, ident, display, err):
+	
+	return alignmentGenerator.sequence_alignment(savepath, querypath, cov, ident, display, err)
 
 ## END

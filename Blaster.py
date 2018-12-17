@@ -186,176 +186,21 @@ def analysis(paths_dict, cov, ident, collapsed, absence, height, width): #statsA
 	
 	return
 
-def sequence_alignment(savepath,openpath,querypath, cov, ident):
-	from Bio.Align.Applications import MuscleCommandline
-	import subprocess
+def sequence_alignment(paths_dict, cov, ident):
 
 	cov = int(cov.get())
-	ident = int(ident.get())	
-
-	seq_resultspath = savepath+"/alignment/"
-	if not os.path.exists(seq_resultspath):
-		os.makedirs(seq_resultspath)
-
-
-	resultsDir = savepath+"/output/"
-	tmpfiles = savepath+"/tmp/"
+	ident = int(ident.get())
 	
-	#dictionaries
-	presence_dict = {}
-	genome_file = {}
-	sequences_dict={}
-
-	#parameters for blast protein analysis retrieving, identity and coverage
-
-	for i in os.listdir(resultsDir):
-		if i.endswith(".txt"):
-			fileName = resultsDir+i
-			f = open(fileName,'r')	
-			print f,ident,cov
-			sequences = analyzer.parseResults(f,ident,cov,"retrieve_sequences")					
-			f.close()
-			tmp = os.path.splitext(i)[0]
-			query = tmp.split('##')[0]
-			subject = tmp.split('##')[1]
-			genome_file[subject] = subject+".fasta"
-			if subject not in presence_dict:
-				presence_dict[subject] = {}
-			presence_dict[subject][query] = sequences #[0]
-			
-
-
-
-
-	outputString = ""
-	count = 0
-	genomes =[]		
-	# Generate the Sequence_dict containing the sequence for align clasified by protein instead of genome sequence.							
-	BD_dict = np.load(savepath+'/BD_.dict.npy').item()
-	for genome_seq in sorted(presence_dict,key=utils.natural_keys):
-		if genome_seq in BD_dict:	
-			genome = [genome_seq][0]
-			value_dict = BD_dict[genome_seq].split("##")
-			Strain =value_dict[0].strip("\n").replace(" ","_")
-			assembly= "_".join(genome.split("_")[0:2])
-			line = [genome_seq, Strain]		
-			for protein in sorted(presence_dict[genome_seq],key=utils.natural_keys):		
-				if protein not in sequences_dict:
-					sequences_dict[protein]={}		
-				if presence_dict[genome_seq][protein][0] > 0:						
-					seq = []	
-					head = Strain+"_"+assembly
-					for n in range(len(presence_dict[genome_seq][protein][1])):
-						sequence = presence_dict[genome_seq][protein][1][n]				
-						seq.append(sequence.rstrip("\n"))
-					sequences_dict[protein][head]=seq
-			
-	#for each protein, all genome sequence are extracted and write in a fasta file     
-	for protein in 	sequences_dict:		
-		filename = seq_resultspath+protein+".fasta"
-
-
-		handle = querypath+"/"+protein+".fasta"
-		Seq = SeqIO.read(handle,"fasta")
-		query_sequence = Seq.seq
-		query_name = Seq.name
-		f = open(filename,'w')
-		f.write(">"+query_name+"\n")	
-		f.write(str(query_sequence)+"\n\n")		
-		for genome_seq in sequences_dict[protein]:
-			genome = genome_seq.replace("_genomic","")	
-			for n in range(len(sequences_dict[protein][genome_seq])):
-				count += 1
-				seq = sequences_dict[protein][genome_seq][n]
-				f.write(">"+genome+"_"+str(count)+"\n")	
-				if seq =="NN":					#podemos modificar esto para controlar que salgan o no los nombresde los genomas que no contienen las proteinas query
-					seq=""
-				f.write(str(seq)+"\n\n")			
-			count = 0	
-		f.close()
-
-
-
-
-	outputDir  = seq_resultspath+"muscle_results/"
-	if not os.path.exists(outputDir):
-		os.makedirs(outputDir)
-
-	outputDir2  = seq_resultspath+"mview_results/"
-	if not os.path.exists(outputDir2):
-		os.makedirs(outputDir2)
-
-	outputDir3  = seq_resultspath+"ete_results/"
-	if not os.path.exists(outputDir3):
-		os.makedirs(outputDir3)
+	savepath = paths_dict[SAVEPATH]
+	querypath = paths_dict[QUERYPATH]
 	
-
-
-
-
-	""" align sequence from blast analysis in fasta 
-	format(.fas), clustal format (.txt and .html) and generated .dat file
-	for mview program """	
-	displayedText.set('Alignment with muscle running!!')
-	output_text.update_idletasks()
-	window.update()	
-	for file in os.listdir(seq_resultspath):
-		if file.endswith(".fasta"):
-			filename = os.path.splitext(file)[0]			
-			res_fasta= outputDir+filename+"_muscle_align.fas"
-			res_txt = outputDir+filename+"_muscle_align.txt"
-			res_html = outputDir+filename+"_muscle_align.html"
-			res_dat = tmpfiles+filename+"_muscle_align.dat"
-			file2 = seq_resultspath+file
-			print file2
-			muscle_cline = MuscleCommandline(input=file2,fastaout=res_fasta, clwout=res_txt, htmlout=res_html)
-			os.system(str(muscle_cline) +">/dev/null 2>&1") 				
-			muscle_cline2 = MuscleCommandline(input=file2,fastaout=res_dat)		
-			os.system(str(muscle_cline2)+">/dev/null 2>&1")	
-			
+	facade.sequence_alignment(savepath, querypath, cov, ident, _display, sys.stderr)
 	
-
-		
-
-	""" align sequence alignment dat files from muscle with mview """
-	displayedText.set('mview alignment running!!')
-	output_text.update_idletasks()
-	window.update()	
-	for file in os.listdir(tmpfiles):   
-		if file.endswith(".dat"):
-			filename = os.path.splitext(file)[0]			
-			res_html = outputDir2+filename+"_mview_align.html"
-			with open(res_html,"wb") as out, open("stderr.txt","wb") as err:
-	  			subprocess.Popen(["mview","-in","fasta","-html","head","-css","on","-coloring","any","-threshold", "90",tmpfiles+file],stdout=out,stderr=err)					
-			
-			
-	
-	#try:
-	#	subprocess.call(["ete3"])
-	#except OSError as e:
-	#	if e.errno == os.errno.ENOENT:
-        # handle file not found error.
-	#		tkMessageBox.showinfo("ORTHOPROK can not access to ete3!!")
-	#		displayedText.set('ORTHOPROK can not access to ete3!!')	
-
-
-
-	#for file in os.listdir(seq_resultspath):		
-	#		if file.endswith(".fasta"):
-	#			fileName = resultsDir+"/Seq_for_alignments/"+file
-	#			query = os.path.splitext(file)[0]
-	#			ResultFolder= outputDir3+query	
-	#			subprocess.Popen(["ete3", "build", "-w", "standard_fasttree","--rename-dup-seqnames", "-a", fileName,"-o", ResultFolder+"/", "--clearall"])
-
-			
-	
-
 	tkMessageBox.showinfo("ORTHOPROK","Alignment is done!!")
-
-
-	displayedText.set('Sequence alignment is done!!')
-	output_text.update_idletasks()
-	window.update()	
+	
+	_display('Sequence alignment is done')
+	
+	return
 
 def protein_length_graphic(savepath,height,width,font_scale):
 
@@ -882,7 +727,7 @@ blast_graphic_button.place(y= 555, x=25)
 
 
 
-Alignbutton = Button(window, text="Alignment", command= lambda:  sequence_alignment(savepath,openpath,querypath,cov,ident))
+Alignbutton = Button(window, text="Alignment", command= lambda:  sequence_alignment(paths_dict, cov, ident))
 Alignbutton.pack()
 Alignbutton.place(y= 415, x=25)
 
